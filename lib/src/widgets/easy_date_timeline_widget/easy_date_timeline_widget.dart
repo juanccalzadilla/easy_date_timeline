@@ -194,7 +194,11 @@ class _EasyDateTimeLineState extends State<EasyDateTimeLine> {
       _easyMonth = month!;
     });
 
-    widget.onMonthChange?.call(month);
+    widget.onMonthChange?.call(DateTime(
+      initialDate.year,
+      month.vale,
+      1,
+    ));
   }
 
   /// The method returns a boolean value, which indicates whether the month picker
