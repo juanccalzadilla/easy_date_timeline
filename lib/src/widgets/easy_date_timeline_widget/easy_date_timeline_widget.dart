@@ -18,6 +18,7 @@ class EasyDateTimeLine extends StatefulWidget {
     this.timeLineProps = const EasyTimeLineProps(),
     this.dayProps = const EasyDayProps(),
     this.onDateChange,
+    this.onMonthChange,
     this.itemBuilder,
     this.activeColor,
     this.locale = "en_US",
@@ -48,6 +49,9 @@ class EasyDateTimeLine extends StatefulWidget {
   /// Called when the selected date in the timeline changes.
   /// This function takes a `DateTime` object as its parameter, which represents the new selected date.
   final OnDateChangeCallBack? onDateChange;
+
+  final OnDateChangeCallBack? onMonthChange;
+
 
   /// > **NOTE:**
   /// > When utilizing the `itemBuilder`, it is essential to provide the width of each day for the date timeline widget.
@@ -189,6 +193,8 @@ class _EasyDateTimeLineState extends State<EasyDateTimeLine> {
       _initialDay = 1;
       _easyMonth = month!;
     });
+
+    widget.onMonthChange?.call(month);
   }
 
   /// The method returns a boolean value, which indicates whether the month picker
