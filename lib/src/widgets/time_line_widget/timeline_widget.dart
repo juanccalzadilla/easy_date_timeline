@@ -19,7 +19,7 @@ class TimeLineWidget extends StatefulWidget {
     this.timeLineProps = const EasyTimeLineProps(),
     this.onDateChange,
     this.itemBuilder,
-    this.autoCenter = true,
+    this.autoCenter = false,
   })  : assert(timeLineProps.hPadding > -1,
             "Can't set timeline hPadding less than zero."),
         assert(timeLineProps.separatorPadding > -1,
