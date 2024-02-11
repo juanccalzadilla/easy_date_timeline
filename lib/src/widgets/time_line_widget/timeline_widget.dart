@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../properties/easy_day_props.dart';
@@ -13,6 +14,9 @@ class TimeLineWidget extends StatefulWidget {
     required this.focusedDate,
     required this.activeDayTextColor,
     required this.activeDayColor,
+    this.showWebIndicator = true,
+    this.rightIndicator,
+    this.leftIndicator,
     this.inactiveDates,
     this.dayProps = const EasyDayProps(),
     this.locale = "en_US",
@@ -70,6 +74,15 @@ class TimeLineWidget extends StatefulWidget {
   /// If set to `false`, the timeline will not scroll when the selected day changes.
   final bool autoCenter;
 
+  /// Widget to show indicators on web
+  ///
+  ///
+  final bool showWebIndicator;
+
+  final Widget? rightIndicator;
+
+  final Widget? leftIndicator;
+
   @override
   State<TimeLineWidget> createState() => _TimeLineWidgetState();
 }
@@ -123,66 +136,110 @@ class _TimeLineWidgetState extends State<TimeLineWidget> {
   Widget build(BuildContext context) {
     final initialDate = widget.initialDate;
 
-    return Container(
-      height: _isLandscapeMode ? _dayWidth : _dayHeight,
-      margin: _timeLineProps.margin,
-      color: _timeLineProps.decoration == null
-          ? _timeLineProps.backgroundColor
-          : null,
-      decoration: _timeLineProps.decoration,
-      child: ClipRRect(
-        borderRadius:
-            _timeLineProps.decoration?.borderRadius ?? BorderRadius.zero,
-        child: ListView.separated(
-          controller: _controller,
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(
-            horizontal: _timeLineProps.hPadding,
-            vertical: _timeLineProps.vPadding,
-          ),
-          itemBuilder: (context, index) {
-            final currentDate =
-                DateTime(initialDate.year, initialDate.month, index + 1);
+    return Stack(
+      children: [
+        Container(
+          height: _isLandscapeMode ? _dayWidth : _dayHeight,
+          margin: _timeLineProps.margin,
+          color: _timeLineProps.decoration == null
+              ? _timeLineProps.backgroundColor
+              : null,
+          decoration: _timeLineProps.decoration,
+          child: ClipRRect(
+            borderRadius:
+                _timeLineProps.decoration?.borderRadius ?? BorderRadius.zero,
+            child: ListView.separated(
+              controller: _controller,
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(
+                horizontal: _timeLineProps.hPadding,
+                vertical: _timeLineProps.vPadding,
+              ),
+              itemBuilder: (context, index) {
+                final currentDate =
+                    DateTime(initialDate.year, initialDate.month, index + 1);
 
-            final isSelected = widget.focusedDate != null
-                ? EasyDateUtils.isSameDay(widget.focusedDate!, currentDate)
-                : EasyDateUtils.isSameDay(widget.initialDate, currentDate);
+                final isSelected = widget.focusedDate != null
+                    ? EasyDateUtils.isSameDay(widget.focusedDate!, currentDate)
+                    : EasyDateUtils.isSameDay(widget.initialDate, currentDate);
 
-            bool isDisabledDay = false;
-            // Check if this date should be deactivated only for the DeactivatedDates.
-            if (widget.inactiveDates != null) {
-              for (DateTime inactiveDate in widget.inactiveDates!) {
-                if (EasyDateUtils.isSameDay(currentDate, inactiveDate)) {
-                  isDisabledDay = true;
-                  break;
+                bool isDisabledDay = false;
+                // Check if this date should be deactivated only for the DeactivatedDates.
+                if (widget.inactiveDates != null) {
+                  for (DateTime inactiveDate in widget.inactiveDates!) {
+                    if (EasyDateUtils.isSameDay(currentDate, inactiveDate)) {
+                      isDisabledDay = true;
+                      break;
+                    }
+                  }
                 }
-              }
-            }
-            return widget.itemBuilder != null
-                ? _dayItemBuilder(
-                    context,
-                    isSelected,
-                    currentDate,
-                  )
-                : EasyDayWidget(
-                    easyDayProps: _dayProps,
-                    date: currentDate,
-                    locale: widget.locale,
-                    isSelected: isSelected,
-                    isDisabled: isDisabledDay,
-                    onDayPressed: () => _onDayChanged(isSelected, currentDate),
-                    activeTextColor: widget.activeDayTextColor,
-                    activeDayColor: widget.activeDayColor,
-                  );
-          },
-          separatorBuilder: (context, index) {
-            return SizedBox(
-              width: _timeLineProps.separatorPadding,
-            );
-          },
-          itemCount: EasyDateUtils.getDaysInMonth(initialDate),
+                return widget.itemBuilder != null
+                    ? _dayItemBuilder(
+                        context,
+                        isSelected,
+                        currentDate,
+                      )
+                    : EasyDayWidget(
+                        easyDayProps: _dayProps,
+                        date: currentDate,
+                        locale: widget.locale,
+                        isSelected: isSelected,
+                        isDisabled: isDisabledDay,
+                        onDayPressed: () =>
+                            _onDayChanged(isSelected, currentDate),
+                        activeTextColor: widget.activeDayTextColor,
+                        activeDayColor: widget.activeDayColor,
+                      );
+              },
+              separatorBuilder: (context, index) {
+                return SizedBox(
+                  width: _timeLineProps.separatorPadding,
+                );
+              },
+              itemCount: EasyDateUtils.getDaysInMonth(initialDate),
+            ),
+          ),
         ),
-      ),
+        if (widget.showWebIndicator && kIsWeb)
+          Positioned(
+            left: 10,
+            bottom: widget.dayProps.height / 4,
+            child: GestureDetector(
+              child: widget.leftIndicator ??
+                  const CircleAvatar(
+                      child:
+                          Center(child: Icon(Icons.arrow_back_ios, size: 15))),
+              onTap: () {
+                _controller.animateTo(
+                  _controller.offset - 100,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.decelerate,
+                );
+              },
+            ),
+          ),
+
+        //Si estamos al final de la lista, no mostramos el indicador derecho
+
+        if (widget.showWebIndicator && kIsWeb)
+          Positioned(
+            right: 10,
+            bottom: widget.dayProps.height / 4,
+            child: GestureDetector(
+              child: widget.rightIndicator ??
+                  const CircleAvatar(
+                      child: Center(
+                          child: Icon(Icons.arrow_forward_ios, size: 15))),
+              onTap: () {
+                _controller.animateTo(
+                  _controller.offset + 100,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.decelerate,
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 
